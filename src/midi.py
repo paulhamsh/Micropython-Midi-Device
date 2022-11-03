@@ -55,8 +55,6 @@ class AudioInterface(USBInterface):
         return (iface, [])
         #return (b"", [])
 
-from machine import UART
-from machine import Pin
 
 class MIDIInterface(USBInterface):
     """ Abstract base class to implement a USB MIDI device in Python. """
@@ -65,18 +63,17 @@ class MIDIInterface(USBInterface):
             _INTERFACE_CLASS_IGNORE, _INTERFACE_SUBCLASS_IGNORE, _PROTOCOL_IGNORE, 0x00
         )
         self._int_ep = None  # set during enumeration
-        self.u = UART(0,115200,tx=Pin(0))
-        self.u.write("Starting MIDI\r\n")
-        
+       
 
     def send_data(self, data):
-        """ Helper function to send a HID report in the typical USB interrupt endpoint associated with a HID interface. """
-        return self.submit_xfer(self._int_ep, data)
-
+        """ Helper function to send data. """
+        #return self.submit_xfer(self._int_ep, data)
+        return self.submit_xfer(0x83, data)
+    
     def get_itf_descriptor(self, num_eps, itf_idx, str_idx):
         """Return the MIDI USB interface descriptors.
         """
-        
+        #return(b"",[])
         ms_interface = ustruct.pack(
             "<BBBBBBBBB",
             9,        # bLength
@@ -141,16 +138,16 @@ class MIDIInterface(USBInterface):
             0x00   # iJack
         )
         iface =  ms_interface + cs_ms_interface + jack1 + jack2 + jack3 + jack4
-        self.u.write("Doing midi interface\r\n")
         return (iface, [])
-        #return (b"", [])
+
 
 
     def get_endpoint_descriptors(self, ep_addr, str_idx):
         """Return the MIDI USB endpoint descriptors.
         """
-        ep2 = ustruct.pack(
-            "<BBBBBHBBB",
+    
+        epA = ustruct.pack(
+            "<BBBBHBBB",
             9,      # bLength
             0x05,   # bDescriptorType ENDPOINT
             0x03,   # bEndpointAddress 
@@ -160,7 +157,7 @@ class MIDIInterface(USBInterface):
             0x00,   # bRefresh
             0x00    # bSyncAddress
         )
-        cs_ep2 = ustruct.pack(
+        cs_epA = ustruct.pack(
             "<BBBBB",
             5,     # bLength
             0x25,  # bDescriptorType CS_ENDPOINT
@@ -168,8 +165,8 @@ class MIDIInterface(USBInterface):
             0x01,  # bNumEmbMIDIJack
             0x01   # BaAssocJackID
         )
-        ep82 = ustruct.pack(
-            "<BBBBBHBBB",
+        epB = ustruct.pack(
+            "<BBBBHBBB",
             9,      # bLength
             0x05,   # bDescriptorType ENDPOINT
             0x83,   # bEndpointAddress 
@@ -179,7 +176,7 @@ class MIDIInterface(USBInterface):
             0x00,   # bRefresh
             0x00    # bSyncAddress
         )
-        cs_ep82 = ustruct.pack(
+        cs_epB = ustruct.pack(
             "<BBBBB",
             5,     # bLength
             0x25,  # bDescriptorType CS_ENDPOINT
@@ -188,11 +185,11 @@ class MIDIInterface(USBInterface):
             0x03   # BaAssocJackID
         )    
         
-        desc = ep02 + cs_ep02 + ep82 + cs_ep82
-        ep_addr = [0x02, 0x82]
-        self.u.write("Doing midi endpoint descs\r\n")
+        #return(b"",[],[])
+        desc = epA + cs_epA + epB + cs_epB
+        ep_addr = [0x03, 0x83]
+        self._int_ep = 0x83
         return (desc, [], ep_addr)
-        #return (b"", [], [])
 
 
 class AudioUSB(AudioInterface):
@@ -205,8 +202,7 @@ class MidiUSB(MIDIInterface):
     def __init__(self):
         super().__init__()
 
-    def send_midi(self):
-        mi= ustruct.pack("BBBB", 0x09, 0x90, 0x20, 0xff)
+    def send_midi(self, mi):
         super().send_data(mi)
 
 

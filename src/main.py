@@ -12,5 +12,9 @@ usbd.reenumerate()
 
 time.sleep(3)  # TODO: provide a way to find out at runtime if an interface is active
 
-m.send_midi()
+mi= ustruct.pack("<BBBB", 0x09, 0x90, 0x20, 0xff)
+
+while True:
+    time.sleep(1)
+    m.send_midi(mi)
 

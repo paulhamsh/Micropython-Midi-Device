@@ -67,6 +67,9 @@ def get():
         _inst = _USBDevice()
     return _inst
 
+from machine import UART
+from machine import Pin
+import binascii
 
 class _USBDevice:
     """Class that implements the Python parts of the MicroPython USBDevice.
@@ -112,6 +115,7 @@ class _USBDevice:
             control_xfer_cb=self._control_xfer_cb,
             xfer_cb=self._xfer_cb,
         )
+        
 
     def add_interface(self, itf):
         """Add an instance of USBInterface to the USBDevice.
@@ -238,19 +242,23 @@ class _USBDevice:
             desc = bytearray(static.desc_cfg)
         else:
             desc = bytearray(_STD_DESC_CONFIG_LEN)
-
+        
         self._eps = {}  # rebuild endpoint mapping as we enumerate each interface
         itf_idx = static.itf_max
         ep_addr = static.ep_max
         str_idx = static.str_max + len(strs)
+        
+        
         for itf in self._itfs:
             # Get the endpoint descriptors first so we know how many endpoints there are
             ep_desc, ep_strs, ep_addrs = itf.get_endpoint_descriptors(ep_addr, str_idx)
+            
             strs += ep_strs
             str_idx += len(ep_strs)
 
             # Now go back and get the interface descriptor
             itf_desc, itf_strs = itf.get_itf_descriptor(len(ep_addrs), itf_idx, str_idx)
+           
             desc += itf_desc
             strs += itf_strs
             itf_idx += 1
@@ -263,8 +271,7 @@ class _USBDevice:
                 ep_addr = max((e & ~80) + 1, e)
 
         self._write_configuration_descriptor(desc)
-
-        self._strs = strs
+        
         return desc
 
     def _write_configuration_descriptor(self, desc):
@@ -479,7 +486,9 @@ class USBInterface:
 
         return (desc, strs)
         """
+        
         return (b"",[])
+        
 
     def get_endpoint_descriptors(self, ep_addr, str_idx):
         """Similar to get_itf_descriptor, returns descriptors for any endpoints
