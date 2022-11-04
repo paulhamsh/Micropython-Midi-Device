@@ -6,6 +6,12 @@ https://github.com/projectgus/micropython/tree/feature/usbd_python
 
 DOESN'T WORK YET
 
-I can't get it to create a configuration descriptor that includes the MIDI device - it doesn't seem to call the Interface class functions at all   
+I had a problem in getting the descriptors to look right, but I put in some debugging and fixed that.   
+So now it looks like a good set of descriptors, but doesn’t really work for midi.   
+If I put in the first empty Audio interface, nothing works.   
+If I leave it as just the MIDI Interface, it worked for a few times (a single message made it, or some in bulk, like they got suck somewhere).   
+
+This is under Windows 10 using MixiOx to look for midi messages.   
+   
 
 
