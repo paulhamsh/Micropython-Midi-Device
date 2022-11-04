@@ -4,7 +4,7 @@ A basic Midi device for Micropython using projectgus usbd_python
 https://github.com/projectgus/micropython/tree/feature/usbd_python   
 
 
-DOESN'T WORK YET
+NEARLY WORKS    
 
 I had a problem in getting the descriptors to look right, but I put in some debugging and fixed that.   
 So now it looks like a good set of descriptors, but doesn’t really work for midi.   
