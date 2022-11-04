@@ -62,13 +62,26 @@ class MIDIInterface(USBInterface):
         super().__init__(
             _INTERFACE_CLASS_IGNORE, _INTERFACE_SUBCLASS_IGNORE, _PROTOCOL_IGNORE, 0x00
         )
-        self._int_ep = None  # set during enumeration
+        self.ep1 = None  # set during enumeration
+        self.ep2 = None
+        self.got_data = False
        
+
+    def sdcb(ep_addr, result, xferred_bytes):
+        return True
 
     def send_data(self, data):
         """ Helper function to send data. """
         #return self.submit_xfer(self._int_ep, data)
         return self.submit_xfer(0x83, data)
+    
+    def receive_data_callback(ep_addr, result, xferred_bytes):
+        self.got_data = True
+        return True
+    
+    def receive_data(self):
+        data = bytearray(64)
+        return self.submit_xfer(0x03, data, receive_data_callback)
     
     def get_itf_descriptor(self, num_eps, itf_idx, str_idx):
         """Return the MIDI USB interface descriptors.
@@ -188,7 +201,8 @@ class MIDIInterface(USBInterface):
         #return(b"",[],[])
         desc = epA + cs_epA + epB + cs_epB
         ep_addr = [0x03, 0x83]
-        self._int_ep = 0x83
+        self.ep1 = 0x83
+        self.ep2 = 0x03
         return (desc, [], ep_addr)
 
 
@@ -204,5 +218,8 @@ class MidiUSB(MIDIInterface):
 
     def send_midi(self, mi):
         super().send_data(mi)
+        
+    def receive_midi(self):
+        super().receive_data()
 
 
