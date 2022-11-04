@@ -8,7 +8,7 @@ led = Pin(25, Pin.OUT)
 led.value(1)
 
 usbd = device.get()
-#a = midi.AudioUSB()
+a = midi.AudioUSB()
 m = midi.MidiUSB()
 
 #usbd.add_interface(a)
@@ -21,7 +21,7 @@ time.sleep(3)  # TODO: provide a way to find out at runtime if an interface is a
 
 led.toggle()
 
-mi_on = ustruct.pack("<BBBB", 0x09, 0x90, 0x20, 0xff)
+mi_on = ustruct.pack("<BBBB", 0x09, 0x90, 0x20, 0x7f)
 mi_off =ustruct.pack("<BBBB", 0x08, 0x80, 0x20, 0x00)
 
 led.toggle()
