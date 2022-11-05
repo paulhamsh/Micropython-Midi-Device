@@ -31,24 +31,34 @@ led.toggle()
 mo_on = ustruct.pack("<BBBB", 0x09, 0x90, 0x20, 0x7f)
 mo_off =ustruct.pack("<BBBB", 0x08, 0x80, 0x20, 0x00)
 
-#m.receive_midi()
+m.start_receive_midi()
 
 oled.text("MIDI Device", 0, 0)
 oled.text("Starting...", 0, 6)
 oled.show()
 
 while True:
-    time.sleep(2)
+    time.sleep(1)
     m.send_midi(mo_on)
     led.toggle()
     
-    time.sleep(2)
+    time.sleep(1)
     m.send_midi(mo_off)
     led.toggle()
     
+ 
     if m.got_data:
         oled.text("GOT DATA", 0, 16)
+        d = m.get_data()
+        oled.fill_rect(0, 32, 100, 64, 0)
+        if d[1] == 0x90:
+            oled.text("ON", 0, 32)
+        else:
+            oled.text("OFF", 0, 32)
         oled.show()
+        
+  
+    
         
     
 
