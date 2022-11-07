@@ -1,14 +1,6 @@
 # MicroPython USB MIDI module
 # MIT license; Copyright (c) 2022 Angus Gratton, Paul Hamshere
-from device import (
-    USBInterface,
-    EP_OUT_FLAG,
-    endpoint_descriptor,
-    split_bmRequestType,
-    STAGE_SETUP,
-    REQ_TYPE_STANDARD,
-    REQ_TYPE_CLASS,
-)
+from device import USBInterface
 from micropython import const
 import ustruct
 
@@ -17,6 +9,36 @@ dat = bytearray(64)
 _INTERFACE_CLASS_IGNORE = 0x01
 _INTERFACE_SUBCLASS_IGNORE = 0x01
 _PROTOCOL_IGNORE = 0x00
+
+
+class RingBuf:
+    def __init__(self, size):
+        self.data = bytearray(size)
+        self.size = size
+        self.index_put = 0
+        self.index_get = 0
+        
+    def put(self, value):
+        next_index = (self.index_put + 1) % self.size
+        # check for overflow
+        if self.index_get != next_index: 
+            self.data[self.index_put] = value
+            self.index_put = next_index
+            return value
+        else:
+            return None
+        
+    def get(self):
+        if self.index_get == self.index_put:
+            return None  ## buffer empty
+        else:
+            value = self.data[self.index_get]
+            self.index_get = (self.index_get + 1) % self.size
+            return value
+        
+    def is_empty(self):
+        return (self.index_get == self. index_put)
+        
 
 class AudioInterface(USBInterface):
     """ Abstract base class to implement a USB MIDI device in Python. """
@@ -59,7 +81,7 @@ class AudioInterface(USBInterface):
 
 
 class MIDIInterface(USBInterface):
-    """ Abstract base class to implement a USB MIDI device in Python. """
+    """ Base class to implement a USB MIDI device in Python. """
     def __init__(self):
         super().__init__(
             _INTERFACE_CLASS_IGNORE, _INTERFACE_SUBCLASS_IGNORE, _PROTOCOL_IGNORE, 0x00
@@ -68,32 +90,30 @@ class MIDIInterface(USBInterface):
         self.ep_in = 0x83
         self.got_data = False
         self.rx_data = bytearray(64)
-        self.rx_data_store = None
+        self.rb = RingBuf(128)
+
 
     def send_data(self, tx_data):
         """ Helper function to send data. """
-        #return self.submit_xfer(self._int_ep, data)
         self.submit_xfer(0x83, tx_data)
-    
+
+    def midi_received(self):
+        return not self.rb.is_empty()
+
+    def get_rb(self):
+        return self.rb.get()
+
     def receive_data_callback(self, ep_addr, result, xferred_bytes):
-        self.got_data = True
-        self.rx_data_store = self.rx_data
+        for i in range (0, xferred_bytes):
+            self.rb.put(self.rx_data[i])
         self.submit_xfer(0x03, self.rx_data, self.receive_data_callback)       
 
     def start_receive_data(self):
         self.submit_xfer(0x03, self.rx_data, self.receive_data_callback) # self.receive_data_callback)
-        
-    def get_data(self):
-        if self.got_data:
-            self.got_data = False
-            return self.rx_data_store
-        else:
-            return False
-    
+
     def get_itf_descriptor(self, num_eps, itf_idx, str_idx):
-        """Return the MIDI USB interface descriptors.
-        """
-        #return(b"",[])
+        """Return the MIDI USB interface descriptors.  """
+
         ms_interface = ustruct.pack(
             "<BBBBBBBBB",
             9,        # bLength
@@ -203,7 +223,6 @@ class MIDIInterface(USBInterface):
             0x03   # BaAssocJackID
         )    
         
-        #return(b"",[],[])
         desc = epA + cs_epA + epB + cs_epB
         ep_addr = [0x03, 0x83]
         return (desc, [], ep_addr)
@@ -219,13 +238,28 @@ class MidiUSB(MIDIInterface):
     def __init__(self):
         super().__init__()
 
-    def send_midi(self, mi):
-        super().send_data(mi)
+    def note_on(self, channel, pitch, vel):
+        obuf = ustruct.pack("<BBBB", 0x09, 0x90 | channel, pitch, vel)
+        super().send_data(obuf)
         
-    def start_receive_midi(self):
+    def note_off(self, channel, pitch, vel):
+        obuf = ustruct.pack("<BBBB", 0x08, 0x80 | channel, pitch, vel)
+        super().send_data(obuf)     
+        
+    def start(self):
         super().start_receive_data()
-        
-    def get_data(self):
-        return super().get_data()
-
+    
+    def midi_received(self):
+        return super().midi_received()
+  
+    def get_midi(self):
+        if super().midi_received():
+            cin = super().get_rb()
+            cmd = super().get_rb()
+            val1 = super().get_rb()
+            val2 = super().get_rb()
+            return (cin, cmd, val1, val2)
+        else:
+            return (None, None, None, None)
+            
 
