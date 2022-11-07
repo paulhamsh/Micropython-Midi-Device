@@ -1,8 +1,9 @@
-import time
-import device, midi
+import device, midi, time
 import ustruct
-from machine import Pin, I2C
+from machine import Pin, I2C, Timer
 from ssd1306 import SSD1306_I2C
+
+
 
 i2c=I2C(1,sda=Pin(2), scl=Pin(3), freq=400000)
 oled = SSD1306_I2C(128, 64, i2c)
@@ -28,37 +29,32 @@ time.sleep(3)  # TODO: provide a way to find out at runtime if an interface is a
 
 led.toggle()
 
-mo_on = ustruct.pack("<BBBB", 0x09, 0x90, 0x20, 0x7f)
-mo_off =ustruct.pack("<BBBB", 0x08, 0x80, 0x20, 0x00)
-
-m.start_receive_midi()
+m.start()
 
 oled.text("MIDI Device", 0, 0)
 oled.text("Starting...", 0, 6)
 oled.show()
 
+ticksthen = time.ticks_ms()
+noteon = True
+
 while True:
-    time.sleep(1)
-    m.send_midi(mo_on)
-    led.toggle()
-    
-    time.sleep(1)
-    m.send_midi(mo_off)
-    led.toggle()
-    
- 
-    if m.got_data:
-        oled.text("GOT DATA", 0, 16)
-        d = m.get_data()
-        oled.fill_rect(0, 32, 100, 64, 0)
-        if d[1] == 0x90:
-            oled.text("ON", 0, 32)
+    ticksnow = time.ticks_ms()
+    if (time.ticks_diff(ticksnow, ticksthen) > 1000):
+        ticksthen = ticksnow
+        led.toggle()
+        if noteon:
+            m.note_on(0, 64, 127)
         else:
-            oled.text("OFF", 0, 32)
-        oled.show()
-        
-  
-    
-        
-    
+            m.note_off(0, 64, 0)
+        noteon = not noteon
+   
+    if m.midi_received():
+        (cin, cmd, val1, val2) = m.get_midi()
+        if cin is not None:  # not necessary as we checked midi_received()
+            #s = str(cmd)
+            s = "%2x %2x %2x" % (cmd, val1, val2)
+            oled.fill_rect(0, 40, 100, 47, 0)
+            oled.text(s, 0, 40)
+            oled.show()   
 
