@@ -3,6 +3,11 @@ A basic Midi device for Micropython using projectgus usbd_python
 
 https://github.com/projectgus/micropython/tree/feature/usbd_python   
 
+The code is here: https://github.com/projectgus/micropython-lib/tree/feature/usbd_python/micropython/usbd    
+
+In projectgus github, select the micropython-lib repository, select the usbd_python branch and look in micropython-lib/micropython/usbd    
+
+
 Will send a note on note off every second, and receive notes and show ON / OFF on an OLED screen.      
 
 # Install instuctions for Micropython
