@@ -5,7 +5,7 @@ https://github.com/projectgus/micropython/tree/feature/usbd_python
 
 Will send a note on note off every second, and receive notes and show ON / OFF on an OLED screen.      
 
-# Install instuctions for Micropyton
+# Install instuctions for Micropython
 
 
 ```
@@ -25,3 +25,8 @@ make
 ```
 
 Then copy device.py and machine.py to your folder (included in src above)    
+
+Official instructions here:    
+
+https://datasheets.raspberrypi.org/pico/raspberry-pi-pico-python-sdk.pdf
+
