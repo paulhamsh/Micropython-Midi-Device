@@ -8,8 +8,7 @@ In projectgus github, select the micropython-lib repository, select the usbd_pyt
 
 Will send a note on note off every second, and receive notes and show ON / OFF on an OLED screen.      
 
-** I think this will no longer work because of changes to usbd that Angus made (for the better!!). If you want to do anything then **
-** I suggest using the example/midi.py from his repo **
+**Note this code is deprecated as Angus vastly improved it and incorporated it into his repo above**
 
 # Install instuctions for Micropython
 
