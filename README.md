@@ -27,7 +27,7 @@ cmake .
 make
 ```
 
-Then copy device.py and machine.py to your folder (included in src above)    
+Then copy ``device.py`` to your folder (included in src above)    
 
 Official instructions here:    
 
